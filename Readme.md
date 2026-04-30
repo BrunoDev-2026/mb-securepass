@@ -4,9 +4,9 @@ Sistema moderno de geração de senhas seguras, com foco em design premium, usab
 
 ---
 
-## 🖼️ Preview do Sistema
+## 🔐 Pré-visualização do MB SecurePass
 
-![Preview do MB SecurePass](C:/Users/User/Desktop/Projetos/preview.png)
+![Prévia do sistema](./assets/preview.png)
 
 ---
 
