@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MB SecurePass - Gerador de Senhas</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<button class="history-toggle" onclick="toggleHistory()" title="Ver Histórico">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+</button>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════
+       LOGOTIPO MB SecurePass
+       ══════════════════════════════════════════ -->
+  <div class="logo-wrapper">
+    <div class="logo-icon">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00ffa3"/>
+            <stop offset="100%" stop-color="#00d9ff"/>
+          </linearGradient>
+        </defs>
+        <!-- Escudo -->
+        <path d="M18 3L5 8.5V18C5 24.627 10.373 30.5 18 33C25.627 30.5 31 24.627 31 18V8.5L18 3Z"
+              fill="url(#shieldGrad)" opacity="0.15"/>
+        <path d="M18 3L5 8.5V18C5 24.627 10.373 30.5 18 33C25.627 30.5 31 24.627 31 18V8.5L18 3Z"
+              stroke="url(#shieldGrad)" stroke-width="1.5" fill="none"/>
+        <!-- Cadeado -->
+        <rect x="13" y="17" width="10" height="8" rx="1.5" fill="url(#shieldGrad)" opacity="0.9"/>
+        <path d="M14.5 17V14.5a3.5 3.5 0 1 1 7 0V17" stroke="url(#shieldGrad)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle cx="18" cy="21" r="1.2" fill="#08090a"/>
+      </svg>
+    </div>
+    <div class="logo-text-group">
+      <span class="logo-mb">MB</span>
+      <span class="logo-securepass">SecurePass</span>
+    </div>
+  </div>
+
+  <header>
+    <p>Gerador de Senhas Criptográficas</p>
+  </header>
+
+  <div class="password-box">
+    <div class="scanner-effect" id="scanner"></div>
+    <input type="password" id="password" readonly placeholder="Senha gerada aparecerá aqui">
+    <button class="icon-btn" onclick="togglePrivacy()" title="Alternar Visibilidade" id="privacyBtn">
+      <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    </button>
+    <button class="icon-btn" onclick="showQRCode()" title="Gerar QR Code">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+        <path d="M7 17h.01"></path><path d="M17 7h.01"></path><path d="M7 7h.01"></path>
+      </svg>
+    </button>
+    <button class="icon-btn" id="mainCopyBtn" onclick="copyPassword()" title="Copiar Senha">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="strength-container">
+    <div class="strength-label">Segurança: <span id="strengthText">Analisando...</span></div>
+    <div class="strength-meter">
+      <div class="strength-bar" id="strengthBar"></div>
+    </div>
+    <div id="crackTime" class="crack-time" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 10px; font-family: 'Inter', sans-serif;">
+      ⏱️ Tempo estimado para quebrar: -
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="range-group">
+      <div class="range-header">
+        <label>Comprimento</label>
+        <span id="lengthValue">16</span>
+      </div>
+      <input type="range" id="length" min="4" max="50" value="16">
+    </div>
+
+    <div class="options-grid">
+      <label class="checkbox-container">
+        <input type="checkbox" id="uppercase" checked>
+        <span class="checkmark"></span> Maiúsculas
+      </label>
+      <label class="checkbox-container">
+        <input type="checkbox" id="lowercase" checked>
+        <span class="checkmark"></span> Minúsculas
+      </label>
+      <label class="checkbox-container">
+        <input type="checkbox" id="numbers" checked>
+        <span class="checkmark"></span> Números
+      </label>
+      <label class="checkbox-container">
+        <input type="checkbox" id="symbols" checked>
+        <span class="checkmark"></span> Símbolos
+      </label>
+    </div>
+  </div>
+
+  <button class="generate" onclick="generatePassword()">Gerar Senha</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SIDEBAR DE HISTÓRICO
+     ══════════════════════════════════════════ -->
+<aside class="history-sidebar" id="historySidebar">
+  <div class="history-header">
+    <h2>Histórico</h2>
+    <div class="header-actions">
+      <button id="lockHistoryBtn" class="icon-btn" onclick="lockHistory()" title="Bloquear Histórico" style="display: none; padding: 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </button>
+      <button class="close-btn" onclick="toggleHistory()">&times;</button>
+    </div>
+  </div>
+
+  <div id="authSection" class="auth-section">
+    <div id="setupView" class="auth-view" style="display: none;">
+      <p>Defina uma Senha Mestra para proteger seu histórico (mínimo 6 caracteres).</p>
+      <input type="password" id="newMasterPassword" class="auth-input" placeholder="Nova Senha Mestra">
+      <button class="generate" id="setMasterBtn" onclick="handleSetMasterPassword()">
+        <span>Definir Senha</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+    <div id="loginView" class="auth-view" style="display: none;">
+      <p>Acesso Restrito. Digite sua Senha Mestra.</p>
+      <input type="password" id="masterPasswordInput" class="auth-input" placeholder="Senha Mestra">
+      <button class="generate" id="verifyMasterBtn" onclick="handleVerifyMasterPassword()">
+        <span>Desbloquear</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="text-link" style="margin-top: 15px; width: 100%; opacity: 0.6; font-size: 0.75rem;" onclick="showResetMasterModal()">Esqueci minha senha</button>
+    </div>
+  </div>
+
+  <div id="historyContent" class="history-content" style="display: none;">
+    <div class="history-list" id="historyList"></div>
+    <div class="history-footer" id="historyFooter">
+      <div class="export-group">
+        <span>Exportar:</span>
+        <button class="text-link" onclick="exportHistory('txt')">TXT</button>
+        <button class="text-link" onclick="exportHistory('json')">JSON</button>
+      </div>
+      <button class="clear-btn" onclick="showClearModal()">Limpar Tudo</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════
+     MODAIS
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <div class="modal-icon">⚠️</div>
+    <h3>Limpar Histórico?</h3>
+    <p>Esta ação removerá permanentemente as últimas senhas geradas.</p>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="hideClearModal()">Cancelar</button>
+      <button class="modal-btn primary"   onclick="clearHistory()">Limpar Agora</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="qrModal">
+  <div class="modal-content">
+    <div class="modal-icon">📱</div>
+    <h3>QR Code da Senha</h3>
+    <p>Aponte a câmera do seu celular para escanear a senha com segurança.</p>
+    <div class="qr-container" id="qrContainer"></div>
+    <div class="modal-actions" style="margin-top: 20px; flex-direction: column;">
+      <button class="modal-btn primary"   style="width: 100%;" onclick="downloadQRCode()">Baixar QR Code</button>
+      <button class="modal-btn secondary" style="width: 100%;" onclick="hideQRCode()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resetMasterModal">
+  <div class="modal-content">
+    <div class="modal-icon">⚠️</div>
+    <h3>Resetar Segurança?</h3>
+    <p>Isso apagará permanentemente sua Senha Mestra e todo o histórico de senhas para sua proteção.</p>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="hideResetMasterModal()">Cancelar</button>
+      <button class="modal-btn primary"   onclick="resetMasterPassword()">Resetar Tudo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════ -->
+<footer class="footer">
+  <p>Desenvolvido por <strong>Bruno David de Oliveira Buchardt</strong></p>
+  <div class="social-links">
+    <a href="https://github.com/BrunoDev-2026" target="_blank" rel="noopener noreferrer" title="GitHub">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+      </svg>
+    </a>
+    <a href="https://www.linkedin.com/in/bruno-david-de-oliveira-buchardt-721643246" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+        <rect x="2" y="9" width="4" height="12"></rect>
+        <circle cx="4" cy="4" r="2"></circle>
+      </svg>
+    </a>
+  </div>
+</footer>
+
+<div id="toast" class="toast">Senha copiada com sucesso!</div>
+
+<script src="script.js"></script>
+<script src="particles.js"></script>
+
+</body>
+</html>
